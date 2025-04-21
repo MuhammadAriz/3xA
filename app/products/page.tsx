@@ -1,6 +1,6 @@
 import { Suspense } from "react"
 import ProductList from "@/components/product-list"
-import ProductFilters from "@/components/product-filters"
+import { ProductFiltersWrapper } from "@/components/product-filters"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
@@ -15,7 +15,7 @@ export default function ProductsPage() {
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="md:col-span-1">
-          <ProductFilters />
+          <ProductFiltersWrapper />
         </div>
 
         <div className="md:col-span-3">
