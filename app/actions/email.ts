@@ -3,7 +3,6 @@
 import { Resend } from "resend"
 
 // Initialize Resend with API key from environment variables
-// If not available, we'll handle the error gracefully
 const resendApiKey = process.env.RESEND_API_KEY
 const resend = resendApiKey ? new Resend(resendApiKey) : null
 
@@ -19,7 +18,6 @@ export async function sendContactEmail(formData: FormData) {
     email,
     subject,
     message,
-    to: "3xa.brand@gmail.com",
     timestamp: new Date().toISOString(),
   })
 
@@ -35,9 +33,10 @@ export async function sendContactEmail(formData: FormData) {
     }
 
     // Send email using Resend
+    // With a free Resend account, we can only send to the verified email address
     const { data, error } = await resend.emails.send({
-      from: "Contact Form <onboarding@resend.dev>", // You can customize this after verifying your domain
-      to: ["3xa.brand@gmail.com"],
+      from: "onboarding@resend.dev", // Default sender for Resend testing
+      to: ["3x.a.brand@gmail.com"], // The verified email address
       subject: `Contact Form: ${subject}`,
       reply_to: email,
       html: `
