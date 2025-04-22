@@ -14,7 +14,7 @@ export default function IntegrationBanner() {
             </p>
             <div className="mt-8">
               <Button size="lg" className="bg-orange-600 hover:bg-orange-700" asChild>
-                <a href="https://www.daraz.pk" target="_blank" rel="noopener noreferrer">
+                <a href="https://s.daraz.pk/s.0O4AU" target="_blank" rel="noopener noreferrer">
                   Visit Our Daraz Store
                 </a>
               </Button>
@@ -22,8 +22,8 @@ export default function IntegrationBanner() {
           </div>
           <div className="relative h-[300px] w-full">
             <Image
-              src="/placeholder.svg?height=600&width=600"
-              alt="Daraz integration"
+              src="3xA.png"
+              alt="3xA"
               fill
               className="object-contain"
             />

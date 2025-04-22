@@ -8,7 +8,7 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold">3xA</h3>
             <p className="mt-4 text-sm text-gray-600">
-              Providing quality products since 2020. We offer a wide range of items to meet your needs.
+              Providing quality products since 2025. We offer a wide range of items to meet your needs.
             </p>
           </div>
 
@@ -68,7 +68,7 @@ export default function Footer() {
             <h3 className="text-sm font-semibold uppercase tracking-wider">Connect</h3>
             <ul className="mt-4 space-y-2">
               <li>
-                <a href="#" className="text-sm text-gray-600 hover:text-gray-900">
+                <a href="https://www.facebook.com/share/15AeugAAZ6/" target="_blank" className="text-sm text-gray-600 hover:text-gray-900">
                   Facebook
                 </a>
               </li>

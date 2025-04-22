@@ -18,7 +18,7 @@ export default function AboutPage() {
             <div>
               <h2 className="mb-4 text-2xl font-bold">Our Story</h2>
               <p className="mb-4 text-gray-700">
-                Founded in 2020, 3xA started with a simple mission: to provide high-quality products that meet the
+                Founded in 2025, 3xA started with a simple mission: to provide high-quality products that meet the
                 everyday needs of our customers. What began as a small online store has grown into a trusted retailer
                 with a presence on multiple platforms including our own website and Daraz.
               </p>
@@ -71,17 +71,17 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3">
             {[
               {
-                name: "John Smith",
+                name: "Muhammad Ayaz",
                 position: "Founder & CEO",
                 image: "/placeholder.svg?height=400&width=400",
               },
               {
-                name: "Sarah Johnson",
+                name: "Muhammad Ajaz",
                 position: "Head of Operations",
                 image: "/placeholder.svg?height=400&width=400",
               },
               {
-                name: "Michael Chen",
+                name: "Muhammad Ariz",
                 position: "Product Manager",
                 image: "/placeholder.svg?height=400&width=400",
               },
