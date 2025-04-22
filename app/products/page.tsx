@@ -4,7 +4,7 @@ import { ProductFiltersWrapper } from "@/components/product-filters"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export const metadata = {
-  title: "Products | Your Brand",
+  title: "Products | 3xA",
   description: "Browse our collection of high-quality products",
 }
 

@@ -6,9 +6,11 @@ import { Menu, Search, ShoppingCart, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useTheme } from "next-themes"
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
+  const { theme, setTheme } = useTheme()
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white">
@@ -24,7 +26,7 @@ export default function Header() {
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col gap-4">
                 <Link href="/" className="text-lg font-bold">
-                  Your Brand
+                  3xA
                 </Link>
                 <Link href="/" className="text-sm font-medium">
                   Home
@@ -46,7 +48,7 @@ export default function Header() {
           </Sheet>
 
           <Link href="/" className="ml-4 text-xl font-bold md:ml-0">
-            Your Brand
+            3xA
           </Link>
 
           <nav className="ml-8 hidden md:flex md:items-center md:gap-6">

@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   }
 
   return {
-    title: `${product.name} | Your Brand`,
+    title: `${product.name} | 3xA`,
     description: product.description,
   }
 }

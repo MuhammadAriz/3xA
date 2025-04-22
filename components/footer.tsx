@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
           <div>
-            <h3 className="text-lg font-bold">Your Brand</h3>
+            <h3 className="text-lg font-bold">3xA</h3>
             <p className="mt-4 text-sm text-gray-600">
               Providing quality products since 2020. We offer a wide range of items to meet your needs.
             </p>
@@ -88,7 +88,7 @@ export default function Footer() {
 
         <div className="mt-12 border-t border-gray-200 pt-8">
           <p className="text-center text-sm text-gray-600">
-            &copy; {new Date().getFullYear()} Your Brand. All rights reserved.
+            &copy; {new Date().getFullYear()} 3xA. All rights reserved.
           </p>
         </div>
       </div>
