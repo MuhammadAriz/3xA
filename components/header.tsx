@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Menu, Search, ShoppingCart, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,22 @@ import { useTheme } from "next-themes"
 
 export default function Header() {
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searchValue, setSearchValue] = useState("")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchValue(e.target.value)
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const url = new URL(window.location.href)
+      url.searchParams.set("search", searchValue)
+      router.push(`/products?search=${searchValue}`)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchValue, router])
   const { theme, setTheme } = useTheme()
 
   return (
@@ -58,7 +75,7 @@ export default function Header() {
             <Link href="/products" className="text-sm font-medium">
               Products
             </Link>
-            <Link href="#daraz-integration" className="text-sm font-medium">
+            <Link href="/#daraz-integration" className="text-sm font-medium">
               Daraz Store
             </Link>
             <Link href="/about" className="text-sm font-medium">
@@ -73,7 +90,13 @@ export default function Header() {
         <div className="flex items-center gap-4">
           {searchOpen ? (
             <div className="absolute inset-x-0 top-0 z-50 flex h-16 items-center justify-between bg-white px-4">
-              <Input type="search" placeholder="Search products..." className="flex-1 md:w-[300px]" autoFocus />
+              <Input
+                type="search"
+                placeholder="Search products..."
+                className="flex-1 md:w-[300px]"
+                autoFocus
+                onChange={handleSearchChange}
+              />
               <Button variant="ghost" size="icon" onClick={() => setSearchOpen(false)}>
                 <X className="h-5 w-5" />
                 <span className="sr-only">Close search</span>
