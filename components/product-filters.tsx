@@ -6,20 +6,23 @@ import { PriceRangeFilter } from "./filters/price-range-filter"
 import { AvailabilityFilters } from "./filters/availability-filters"
 import { ApplyFiltersButton } from "./filters/apply-filters-button"
 import { MobileFilters } from "./filters/mobile-filters"
+import { FilterProvider } from "@/contexts/filter-context"
 
 // This is a server component that wraps the client component
 export function ProductFiltersWrapper() {
   return (
-    <Suspense fallback={<FiltersLoadingSkeleton />}>
-      <div className="hidden md:block">
-        <div className="sticky top-24 rounded-lg border bg-white p-6">
-          <FilterContent />
+    <FilterProvider>
+      <Suspense fallback={<FiltersLoadingSkeleton />}>
+        <div className="hidden md:block">
+          <div className="sticky top-24 rounded-lg border bg-white p-6">
+            <FilterContent />
+          </div>
         </div>
-      </div>
-      <div className="md:hidden">
-        <MobileFilters />
-      </div>
-    </Suspense>
+        <div className="md:hidden">
+          <MobileFilters />
+        </div>
+      </Suspense>
+    </FilterProvider>
   )
 }
 
@@ -29,7 +32,7 @@ function FilterContent() {
     { id: "electronics", name: "Electronics" },
     { id: "clothing", name: "Clothing" },
     { id: "home", name: "Home & Kitchen" },
-    { id: "beauty", name: "Beauty & Personal Care" },
+    { id: "fitness", name: "Fitness" },
   ]
 
   const brands = [

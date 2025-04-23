@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
 import { Slider } from "@/components/ui/slider"
+import { useFilters } from "@/contexts/filter-context"
 
 export function PriceRangeFilter() {
-  const [priceRange, setPriceRange] = useState([0, 1000])
+  const { priceRange, setPriceRange } = useFilters()
 
   return (
     <>

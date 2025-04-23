@@ -11,7 +11,10 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "3xA | Quality Products",
   description: "Discover our collection of high-quality products",
-    generator: 'v0.dev'
+  generator: "v0.dev",
+  icons: {
+    icon: "/favicon.ico",
+  },
 }
 
 export default function RootLayout({
@@ -22,9 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <head>
-            <link rel="icon" href="/favicon.ico" />
-        </head>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <div className="flex min-h-screen flex-col">
             <Header />

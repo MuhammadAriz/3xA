@@ -8,10 +8,31 @@ export const metadata = {
   description: "Browse our collection of high-quality products",
 }
 
-export default function ProductsPage() {
+export default function ProductsPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined }
+}) {
+  // Get search query from URL
+  const searchQuery = typeof searchParams.q === "string" ? searchParams.q : undefined
+
+  // Get filters from URL
+  const filters = {
+    categories: searchParams.categories ? (searchParams.categories as string).split(",") : undefined,
+    brands: searchParams.brands ? (searchParams.brands as string).split(",") : undefined,
+    priceRange:
+      searchParams.minPrice && searchParams.maxPrice
+        ? ([Number(searchParams.minPrice), Number(searchParams.maxPrice)] as [number, number])
+        : undefined,
+    inStock: searchParams.inStock === "true",
+    onDaraz: searchParams.onDaraz === "true",
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="mb-8 text-3xl font-bold">Our Products</h1>
+      <h1 className="mb-8 text-3xl font-bold">
+        {searchQuery ? `Search Results for "${searchQuery}"` : "Our Products"}
+      </h1>
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-4">
         <div className="md:col-span-1">
@@ -20,7 +41,7 @@ export default function ProductsPage() {
 
         <div className="md:col-span-3">
           <Suspense fallback={<ProductsLoadingSkeleton />}>
-            <ProductList />
+            <ProductList searchQuery={searchQuery} filters={filters} />
           </Suspense>
         </div>
       </div>

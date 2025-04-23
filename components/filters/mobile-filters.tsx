@@ -8,16 +8,17 @@ import { CategoryFilters } from "./category-filters"
 import { BrandFilters } from "./brand-filters"
 import { PriceRangeFilter } from "./price-range-filter"
 import { AvailabilityFilters } from "./availability-filters"
-import { ApplyFiltersButton } from "./apply-filters-button"
+import { useFilters } from "@/contexts/filter-context"
 
 export function MobileFilters() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const { applyFilters, resetFilters } = useFilters()
 
   const categories = [
     { id: "electronics", name: "Electronics" },
     { id: "clothing", name: "Clothing" },
     { id: "home", name: "Home & Kitchen" },
-    { id: "beauty", name: "Beauty & Personal Care" },
+    { id: "fitness", name: "Fitness" },
   ]
 
   const brands = [
@@ -26,6 +27,11 @@ export function MobileFilters() {
     { id: "brand3", name: "Brand 3" },
     { id: "brand4", name: "Brand 4" },
   ]
+
+  const handleApplyFilters = () => {
+    applyFilters()
+    setMobileFiltersOpen(false)
+  }
 
   return (
     <div className="mb-6 flex items-center justify-between">
@@ -63,7 +69,20 @@ export function MobileFilters() {
             </div>
 
             <div className="border-t pt-6">
-              <ApplyFiltersButton />
+              <div className="flex gap-2">
+                <Button className="flex-1" onClick={handleApplyFilters}>
+                  Apply Filters
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    resetFilters()
+                    setMobileFiltersOpen(false)
+                  }}
+                >
+                  Reset
+                </Button>
+              </div>
             </div>
           </div>
         </SheetContent>
