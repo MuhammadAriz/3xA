@@ -1,12 +1,12 @@
 import type { Product } from "./types"
 
-// Mock data for products
+// Mock data for products with prices in PKR
 const products: Product[] = [
   {
     id: "1",
     name: "Wireless Bluetooth Headphones",
     description: "Premium noise-cancelling headphones with crystal clear sound and long battery life.",
-    price: 129.99,
+    price: 12999,
     image: "/placeholder.svg?height=400&width=400",
     category: "electronics",
     rating: 4.5,
@@ -19,7 +19,7 @@ const products: Product[] = [
     id: "2",
     name: "Smart Watch Series 5",
     description: "Track your fitness, receive notifications, and more with this advanced smartwatch.",
-    price: 199.99,
+    price: 19999,
     image: "/placeholder.svg?height=400&width=400",
     category: "electronics",
     rating: 4.8,
@@ -32,7 +32,7 @@ const products: Product[] = [
     id: "3",
     name: "Ergonomic Office Chair",
     description: "Comfortable chair with lumbar support for long working hours.",
-    price: 249.99,
+    price: 24999,
     image: "/placeholder.svg?height=400&width=400",
     category: "home",
     rating: 4.3,
@@ -44,7 +44,7 @@ const products: Product[] = [
     id: "4",
     name: "Organic Cotton T-Shirt",
     description: "Soft, breathable t-shirt made from 100% organic cotton.",
-    price: 24.99,
+    price: 2499,
     image: "/placeholder.svg?height=400&width=400",
     category: "clothing",
     rating: 4.2,
@@ -57,7 +57,7 @@ const products: Product[] = [
     id: "5",
     name: "Professional DSLR Camera",
     description: "Capture stunning photos and videos with this high-quality camera.",
-    price: 899.99,
+    price: 89999,
     image: "/placeholder.svg?height=400&width=400",
     category: "electronics",
     rating: 4.9,
@@ -69,7 +69,7 @@ const products: Product[] = [
     id: "6",
     name: "Stainless Steel Water Bottle",
     description: "Keep your drinks hot or cold for hours with this insulated bottle.",
-    price: 29.99,
+    price: 2999,
     image: "/placeholder.svg?height=400&width=400",
     category: "home",
     rating: 4.1,
@@ -82,7 +82,7 @@ const products: Product[] = [
     id: "7",
     name: "Wireless Charging Pad",
     description: "Fast wireless charging for compatible smartphones and devices.",
-    price: 39.99,
+    price: 3999,
     image: "/placeholder.svg?height=400&width=400",
     category: "electronics",
     rating: 4.4,
@@ -95,13 +95,13 @@ const products: Product[] = [
     id: "8",
     name: "Premium Yoga Mat",
     description: "Non-slip, eco-friendly yoga mat for comfortable practice.",
-    price: 49.99,
+    price: 1, // Special product with price of PKR 1
     image: "/placeholder.svg?height=400&width=400",
     category: "fitness",
     rating: 4.7,
     reviewCount: 73,
     stock: 18,
-    featured: false,
+    featured: true,
   },
 ]
 

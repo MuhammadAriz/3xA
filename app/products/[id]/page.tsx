@@ -1,11 +1,17 @@
 import Image from "next/image"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ShoppingCart, Star } from "lucide-react"
+import { ArrowLeft, Star } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { getProductById } from "@/lib/products"
 import RelatedProducts from "@/components/related-products"
+import AddToCartButton from "@/components/add-to-cart-button"
+
+// Format price in PKR
+function formatPrice(price: number): string {
+  return `PKR ${price.toLocaleString()}`
+}
 
 export async function generateMetadata({ params }: { params: { id: string } }) {
   const product = await getProductById(params.id)
@@ -69,7 +75,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
             <span className="ml-2 text-sm text-gray-600">{product.reviewCount} reviews</span>
           </div>
 
-          <div className="mt-6 text-2xl font-bold">${product.price.toFixed(2)}</div>
+          <div className="mt-6 text-2xl font-bold">{formatPrice(product.price)}</div>
 
           {product.stock > 0 ? (
             <div className="mt-2 text-sm text-green-600">In Stock ({product.stock} available)</div>
@@ -83,12 +89,9 @@ export default async function ProductPage({ params }: { params: { id: string } }
           </div>
 
           <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-            <Button size="lg" className="gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Add to Cart
-            </Button>
-            <Button variant="outline" size="lg">
-              Buy Now
+            <AddToCartButton product={product} variant="default" size="lg" />
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/cart">View Cart</Link>
             </Button>
           </div>
 

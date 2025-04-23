@@ -1,10 +1,36 @@
+"use client"
+
+import type React from "react"
+
 import Link from "next/link"
 import Image from "next/image"
 import { ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Product } from "@/lib/types"
+import { useCart } from "@/contexts/cart-context"
+import { toast } from "@/components/ui/use-toast"
+
+// Format price in PKR
+function formatPrice(price: number): string {
+  return `PKR ${price.toLocaleString()}`
+}
 
 export default function ProductCard({ product }: { product: Product }) {
+  const { addItem } = useCart()
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault() // Prevent navigation
+    e.stopPropagation() // Prevent event bubbling
+
+    addItem(product, 1)
+
+    toast({
+      title: "Added to cart",
+      description: `${product.name} has been added to your cart.`,
+      duration: 3000,
+    })
+  }
+
   return (
     <div className="group relative rounded-lg border bg-white p-4 transition-all hover:shadow-md">
       {product.darazLink && (
@@ -28,8 +54,8 @@ export default function ProductCard({ product }: { product: Product }) {
         <p className="mt-1 text-sm text-gray-600 line-clamp-2">{product.description}</p>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className="text-lg font-bold">${product.price.toFixed(2)}</span>
-          <Button size="sm" variant="ghost" className="rounded-full">
+          <span className="text-lg font-bold">{formatPrice(product.price)}</span>
+          <Button size="sm" variant="ghost" className="rounded-full" onClick={handleAddToCart}>
             <ShoppingCart className="h-5 w-5" />
             <span className="sr-only">Add to cart</span>
           </Button>

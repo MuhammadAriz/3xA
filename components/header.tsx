@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTheme } from "next-themes"
 import Search from "@/components/search"
+import { useCart } from "@/contexts/cart-context"
+import { Badge } from "@/components/ui/badge"
 
 function SearchFallback() {
   return (
@@ -19,6 +21,7 @@ function SearchFallback() {
 
 export default function Header() {
   const { theme, setTheme } = useTheme()
+  const { itemCount } = useCart()
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white">
@@ -83,12 +86,22 @@ export default function Header() {
             <Search />
           </Suspense>
 
-          <Button variant="ghost" size="icon" asChild>
-            <Link href="/cart">
-              <ShoppingCart className="h-5 w-5" />
-              <span className="sr-only">Cart</span>
-            </Link>
-          </Button>
+          <div className="relative">
+            <Button variant="ghost" size="icon" asChild>
+              <Link href="/cart">
+                <ShoppingCart className="h-5 w-5" />
+                <span className="sr-only">Cart</span>
+                {itemCount > 0 && (
+                  <Badge
+                    className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs"
+                    variant="destructive"
+                  >
+                    {itemCount}
+                  </Badge>
+                )}
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </header>
