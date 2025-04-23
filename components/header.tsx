@@ -1,10 +1,21 @@
 "use client"
+
+import { Suspense } from "react"
 import Link from "next/link"
 import { Menu, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTheme } from "next-themes"
 import Search from "@/components/search"
+
+function SearchFallback() {
+  return (
+    <Button variant="ghost" size="icon">
+      <span className="h-5 w-5 animate-pulse rounded-full bg-gray-200"></span>
+      <span className="sr-only">Search loading</span>
+    </Button>
+  )
+}
 
 export default function Header() {
   const { theme, setTheme } = useTheme()
@@ -68,7 +79,9 @@ export default function Header() {
         </div>
 
         <div className="flex items-center gap-4">
-          <Search />
+          <Suspense fallback={<SearchFallback />}>
+            <Search />
+          </Suspense>
 
           <Button variant="ghost" size="icon" asChild>
             <Link href="/cart">
