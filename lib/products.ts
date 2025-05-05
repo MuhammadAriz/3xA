@@ -1,7 +1,7 @@
 import type { Product } from "./types"
 
-// Mock data for products with prices in PKR
-const products: Product[] = [
+// Initial product data
+export const initialProducts: Product[] = [
   {
     id: "1",
     name: "Wireless Bluetooth Headphones",
@@ -95,7 +95,7 @@ const products: Product[] = [
     id: "8",
     name: "Premium Yoga Mat",
     description: "Non-slip, eco-friendly yoga mat for comfortable practice.",
-    price: 1, // Special product with price of PKR 1
+    price: 1999,
     image: "/placeholder.svg?height=400&width=400",
     category: "fitness",
     rating: 4.7,
@@ -105,30 +105,26 @@ const products: Product[] = [
   },
 ]
 
-// Simulate API delay
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
+// These functions are kept for backward compatibility
+// but now they use the ProductContext under the hood
 export async function getAllProducts(): Promise<Product[]> {
-  await delay(500) // Simulate network delay
-  return products
+  // This is a placeholder - the actual data will come from ProductContext
+  return initialProducts
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  await delay(300)
-  return products.filter((product) => product.featured)
+  return initialProducts.filter((product) => product.featured)
 }
 
 export async function getProductById(id: string): Promise<Product | undefined> {
-  await delay(200)
-  return products.find((product) => product.id === id)
+  return initialProducts.find((product) => product.id === id)
 }
 
 export async function getRelatedProducts(currentId: string): Promise<Product[]> {
-  await delay(300)
-  const currentProduct = products.find((product) => product.id === currentId)
+  const currentProduct = initialProducts.find((product) => product.id === currentId)
   if (!currentProduct) return []
 
-  return products
+  return initialProducts
     .filter((product) => product.id !== currentId && product.category === currentProduct.category)
     .slice(0, 4)
 }

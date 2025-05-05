@@ -1,8 +1,8 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
-import { Menu, ShoppingCart } from "lucide-react"
+import { Menu, ShoppingCart, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { useTheme } from "next-themes"
@@ -21,13 +21,19 @@ function SearchFallback() {
 
 export default function Header() {
   const { theme, setTheme } = useTheme()
-  const { itemCount } = useCart()
+  const { items, getCartCount } = useCart()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const itemCount = getCartCount()
+
+  const handleNavigation = () => {
+    setSidebarOpen(false)
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center">
-          <Sheet>
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-6 w-6" />
@@ -36,23 +42,26 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[300px] sm:w-[400px]">
               <nav className="flex flex-col gap-4">
-                <Link href="/" className="text-lg font-bold">
+                <Link href="/" className="text-lg font-bold" onClick={handleNavigation}>
                   3xA
                 </Link>
-                <Link href="/" className="text-sm font-medium">
+                <Link href="/" className="text-sm font-medium" onClick={handleNavigation}>
                   Home
                 </Link>
-                <Link href="/products" className="text-sm font-medium">
+                <Link href="/products" className="text-sm font-medium" onClick={handleNavigation}>
                   Products
                 </Link>
-                <Link href="#daraz-integration" className="text-sm font-medium">
+                <Link href="/#daraz-integration" className="text-sm font-medium" onClick={handleNavigation}>
                   Daraz Store
                 </Link>
-                <Link href="/about" className="text-sm font-medium">
+                <Link href="/about" className="text-sm font-medium" onClick={handleNavigation}>
                   About
                 </Link>
-                <Link href="/contact" className="text-sm font-medium">
+                <Link href="/contact" className="text-sm font-medium" onClick={handleNavigation}>
                   Contact
+                </Link>
+                <Link href="/orders" className="text-sm font-medium" onClick={handleNavigation}>
+                  My Orders
                 </Link>
               </nav>
             </SheetContent>
@@ -69,7 +78,7 @@ export default function Header() {
             <Link href="/products" className="text-sm font-medium">
               Products
             </Link>
-            <Link href="#daraz-integration" className="text-sm font-medium">
+            <Link href="/#daraz-integration" className="text-sm font-medium">
               Daraz Store
             </Link>
             <Link href="/about" className="text-sm font-medium">
@@ -85,6 +94,13 @@ export default function Header() {
           <Suspense fallback={<SearchFallback />}>
             <Search />
           </Suspense>
+
+          <Link href="/orders" className="hidden md:block">
+            <Button variant="ghost" size="icon">
+              <User className="h-5 w-5" />
+              <span className="sr-only">My Orders</span>
+            </Button>
+          </Link>
 
           <div className="relative">
             <Button variant="ghost" size="icon" asChild>

@@ -1,7 +1,9 @@
-import { getAllProducts } from "@/lib/products"
+"use client"
+
+import { useProducts } from "@/contexts/product-context"
 import ProductCard from "./product-card"
 
-export default async function ProductList({
+export default function ProductList({
   searchQuery,
   filters,
 }: {
@@ -14,10 +16,10 @@ export default async function ProductList({
     onDaraz?: boolean
   }
 }) {
-  const products = await getAllProducts()
+  const { products, isLoading } = useProducts()
 
   // Filter products based on search query
-  let filteredProducts = products
+  let filteredProducts = products || []
 
   if (searchQuery) {
     const query = searchQuery.toLowerCase()
@@ -53,10 +55,20 @@ export default async function ProductList({
     }
   }
 
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="h-80 animate-pulse rounded-lg bg-gray-200"></div>
+        ))}
+      </div>
+    )
+  }
+
   if (filteredProducts.length === 0) {
     return (
-      <div className="text-center py-8">
-        <h3 className="text-lg font-medium mb-2">No products found</h3>
+      <div className="py-8 text-center">
+        <h3 className="mb-2 text-lg font-medium">No products found</h3>
         <p className="text-gray-500">Try adjusting your search or filter criteria</p>
       </div>
     )

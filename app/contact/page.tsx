@@ -39,7 +39,6 @@ export default function ContactPage() {
                 <div>
                   <h3 className="text-lg font-medium">Email Us</h3>
                   <p className="mt-1 text-gray-600">3x.a.brand@gmail.com</p>
-                  <p className="text-gray-600">support@3xa.com</p>
                 </div>
               </div>
 
@@ -49,8 +48,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-medium">Call Us</h3>
-                  <p className="mt-1 text-gray-600">+1 (123) 456-7890</p>
-                  <p className="text-gray-600">Mon-Fri, 9am-6pm</p>
+                  <p className="mt-1 text-gray-600">+92 323 2056640</p>
                 </div>
               </div>
             </div>
@@ -127,14 +125,14 @@ export default function ContactPage() {
         </div>
 
         <div className="rounded-lg border bg-white p-4">
-        <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3305.328453691643!2d-118.2436849!3d34.0522342!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c2c7b8e53e6b8f%3A0x483b6f86a9e4e4e5!2s123%20Business%20St%2C%20Los%20Angeles%2C%20CA%2090015%2C%20USA!5e0!3m2!1sen!2sus!4v1677676424837!5m2!1sen!2sus"
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3403.0514244302395!2d74.2651344!3d31.4750239!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x391903d3c75a8e5b%3A0x5f7c0b020e9e9d1a!2sJohar%20Town%2C%20Lahore%2C%20Punjab%2C%20Pakistan!5e0!3m2!1sen!2s!4v1682676424837!5m2!1sen!2s"
             width="100%"
             height="400"
             style={{ border: 0 }}
             allowFullScreen={true}
             loading="lazy"
-        ></iframe>
+          ></iframe>
         </div>
       </div>
     </div>

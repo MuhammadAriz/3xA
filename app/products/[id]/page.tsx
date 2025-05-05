@@ -1,36 +1,45 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, useParams } from "next/navigation"
 import { ArrowLeft, Star } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { getProductById } from "@/lib/products"
 import RelatedProducts from "@/components/related-products"
 import AddToCartButton from "@/components/add-to-cart-button"
+import { useProducts } from "@/contexts/product-context"
+import type { Product } from "@/lib/types"
 
 // Format price in PKR
 function formatPrice(price: number): string {
   return `PKR ${price.toLocaleString()}`
 }
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const product = await getProductById(params.id)
+export default function ProductPage() {
+  const params = useParams()
+  const { getProductById } = useProducts()
+  const [product, setProduct] = useState<Product | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  if (!product) {
-    return {
-      title: "Product Not Found",
-      description: "The requested product could not be found",
+  useEffect(() => {
+    if (params.id) {
+      const foundProduct = getProductById(params.id as string)
+      if (foundProduct) {
+        setProduct(foundProduct)
+      }
+      setLoading(false)
     }
-  }
+  }, [params.id, getProductById])
 
-  return {
-    title: `${product.name} | 3xA`,
-    description: product.description,
+  if (loading) {
+    return (
+      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-emerald-600"></div>
+      </div>
+    )
   }
-}
-
-export default async function ProductPage({ params }: { params: { id: string } }) {
-  const product = await getProductById(params.id)
 
   if (!product) {
     notFound()
@@ -128,7 +137,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
 
       <div className="mt-16">
         <h2 className="mb-8 text-2xl font-bold">Related Products</h2>
-        <RelatedProducts currentProductId={params.id} />
+        <RelatedProducts currentProductId={product.id} />
       </div>
     </div>
   )

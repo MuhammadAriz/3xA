@@ -8,14 +8,14 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null
 
 export async function sendContactEmail(formData: FormData) {
   const name = formData.get("name") as string
-  const email = formData.get("email") as string
+  const mobile = formData.get("mobile") as string
   const subject = formData.get("subject") as string
   const message = formData.get("message") as string
 
   // Log the submission for debugging and as a backup
   console.log("Contact form submission:", {
     name,
-    email,
+    mobile,
     subject,
     message,
     timestamp: new Date().toISOString(),
@@ -38,11 +38,11 @@ export async function sendContactEmail(formData: FormData) {
       from: "onboarding@resend.dev", // Default sender for Resend testing
       to: ["3x.a.brand@gmail.com"], // The verified email address
       subject: `Contact Form: ${subject}`,
-      reply_to: email,
+      reply_to: "3x.a.brand@gmail.com", // Use your own email as reply-to
       html: `
         <h2>New Contact Form Submission</h2>
         <p><strong>Name:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Mobile:</strong> ${mobile}</p>
         <p><strong>Subject:</strong> ${subject}</p>
         <h3>Message:</h3>
         <p>${message.replace(/\n/g, "<br />")}</p>
