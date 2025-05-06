@@ -46,13 +46,21 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     try {
+      // First validate credentials before redirecting
       const success = await login(email, password)
+
       if (success) {
         setLoginSuccess(true)
-        // If login is successful, the auth context will handle the redirect
+        // Wait a moment before redirecting to ensure state is updated
+        setTimeout(() => {
+          router.push("/admin")
+        }, 500)
+      } else {
+        setError("Invalid credentials. Please try again.")
       }
     } catch (error) {
       setError("An error occurred. Please try again.")
+      console.error("Login error:", error)
     } finally {
       setIsLoading(false)
     }
@@ -82,6 +90,7 @@ export default function AdminLoginPage() {
       }
     } catch (error) {
       setRegError("Registration failed. Please try again.")
+      console.error("Registration error:", error)
     } finally {
       setRegIsLoading(false)
     }

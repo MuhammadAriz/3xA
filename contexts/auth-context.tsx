@@ -35,9 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if user is authenticated on initial load
   useEffect(() => {
     const checkAuthentication = async () => {
-      const authenticated = await checkAuth()
-      setIsAuthenticated(authenticated)
-      setIsLoading(false)
+      try {
+        const authenticated = await checkAuth()
+        setIsAuthenticated(authenticated)
+      } catch (error) {
+        console.error("Authentication check failed:", error)
+      } finally {
+        setIsLoading(false)
+      }
     }
 
     checkAuthentication()

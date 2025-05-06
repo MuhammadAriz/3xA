@@ -1,25 +1,44 @@
-import { Suspense } from "react"
-import { Button } from "@/components/ui/button"
+"use client"
+
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { PlusCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Plus } from "lucide-react"
 import ProductsTable from "@/components/admin/products-table"
 
 export default function ProductsPage() {
+  const [isClient, setIsClient] = useState(false)
+
+  // Use this to ensure hydration
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  if (!isClient) {
+    return null // Return nothing during SSR to prevent hydration mismatch
+  }
+
   return (
-    <div className="container mx-auto py-10">
-      <div className="flex items-center justify-between mb-6">
+    <div>
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Products</h1>
         <Button asChild>
           <Link href="/admin/products/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Product
+            <Plus className="mr-2 h-4 w-4" /> Add Product
           </Link>
         </Button>
       </div>
 
-      <Suspense fallback={<div>Loading products...</div>}>
-        <ProductsTable />
-      </Suspense>
+      <Card>
+        <CardHeader>
+          <CardTitle>All Products</CardTitle>
+          <CardDescription>Manage your product inventory, prices, and details.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProductsTable />
+        </CardContent>
+      </Card>
     </div>
   )
 }
