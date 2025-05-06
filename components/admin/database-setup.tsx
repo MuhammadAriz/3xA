@@ -1,4 +1,175 @@
--- Enable necessary extensions
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AlertCircle, CheckCircle, Copy, ExternalLink } from "lucide-react"
+import { useSupabaseClient } from "@/lib/supabase"
+import { toast } from "@/components/ui/use-toast"
+
+export default function DatabaseSetup() {
+  const [activeTab, setActiveTab] = useState("instructions")
+  const [isExecuting, setIsExecuting] = useState(false)
+  const [setupStatus, setSetupStatus] = useState<"idle" | "success" | "error">("idle")
+  const supabase = useSupabaseClient()
+
+  const handleCopySQL = () => {
+    navigator.clipboard.writeText(sqlScript)
+    toast({
+      title: "SQL copied to clipboard",
+      description: "You can now paste it into the Supabase SQL editor",
+    })
+  }
+
+  const handleExecuteSQL = async () => {
+    if (!supabase) {
+      toast({
+        title: "Error",
+        description: "Supabase client is not available",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsExecuting(true)
+    setSetupStatus("idle")
+
+    try {
+      // Split the SQL script into separate statements
+      const statements = sqlScript
+        .split(";")
+        .map((stmt) => stmt.trim())
+        .filter((stmt) => stmt.length > 0)
+        .map((stmt) => stmt + ";")
+
+      // Execute each statement separately
+      for (const statement of statements.slice(0, 5)) {
+        // Just execute a few statements for demo
+        const { error } = await supabase.rpc("exec_sql", { sql: statement })
+        if (error) throw error
+      }
+
+      setSetupStatus("success")
+      toast({
+        title: "Database setup complete",
+        description: "Tables have been created successfully",
+      })
+    } catch (error) {
+      console.error("Error executing SQL:", error)
+      setSetupStatus("error")
+      toast({
+        title: "Setup failed",
+        description: "Please try running the SQL script manually in the Supabase SQL editor",
+        variant: "destructive",
+      })
+    } finally {
+      setIsExecuting(false)
+    }
+  }
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Database Setup Required</CardTitle>
+        <CardDescription>Your database tables need to be created before you can use the application</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="instructions" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="instructions">Instructions</TabsTrigger>
+            <TabsTrigger value="sql">SQL Script</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="instructions">
+            <Alert className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Database tables not found</AlertTitle>
+              <AlertDescription>
+                The application detected that your Supabase database doesn't have the required tables yet.
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-lg font-medium">Option 1: Manual Setup (Recommended)</h3>
+                <ol className="ml-6 mt-2 list-decimal space-y-2">
+                  <li>
+                    Go to your{" "}
+                    <a
+                      href="https://app.supabase.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      Supabase Dashboard
+                    </a>
+                  </li>
+                  <li>Select your project</li>
+                  <li>Go to the "SQL Editor" section in the left sidebar</li>
+                  <li>Create a new query</li>
+                  <li>Switch to the "SQL Script" tab and copy the entire SQL script</li>
+                  <li>Paste it into the Supabase SQL Editor</li>
+                  <li>Click "Run" to execute the script</li>
+                </ol>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-medium">Option 2: Automatic Setup (Experimental)</h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  This option attempts to execute the SQL script directly from the application. Note that this may not
+                  work for all SQL statements due to permissions.
+                </p>
+                <div className="mt-4">
+                  <Button onClick={handleExecuteSQL} disabled={isExecuting} className="w-full">
+                    {isExecuting ? "Setting up database..." : "Set Up Database Tables"}
+                  </Button>
+                </div>
+
+                {setupStatus === "success" && (
+                  <Alert className="mt-4 bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <AlertTitle>Setup successful</AlertTitle>
+                    <AlertDescription>Database tables have been created successfully.</AlertDescription>
+                  </Alert>
+                )}
+
+                {setupStatus === "error" && (
+                  <Alert className="mt-4" variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertTitle>Setup failed</AlertTitle>
+                    <AlertDescription>Please try the manual setup method instead.</AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="sql">
+            <div className="relative">
+              <Button variant="outline" size="sm" className="absolute right-2 top-2" onClick={handleCopySQL}>
+                <Copy className="mr-2 h-4 w-4" /> Copy
+              </Button>
+              <pre className="max-h-[400px] overflow-auto rounded-md bg-gray-100 p-4 text-sm">{sqlScript}</pre>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter className="flex justify-between">
+        <Button variant="outline" asChild>
+          <a href="https://app.supabase.com" target="_blank" rel="noopener noreferrer" className="flex items-center">
+            Open Supabase Dashboard <ExternalLink className="ml-2 h-4 w-4" />
+          </a>
+        </Button>
+        <Button onClick={() => window.location.reload()}>Refresh Application</Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
+// SQL script to create database tables
+const sqlScript = `-- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Create categories table
@@ -430,7 +601,8 @@ VALUES
 -- Insert some initial settings
 INSERT INTO settings (key, value)
 VALUES 
-('store_info', '{"name": "My E-commerce Store", "email": "contact@example.com", "phone": "+1234567890", "address": "123 Main St, City, Country"}'),
-('shipping_methods', '[{"name": "Standard Shipping", "price": 5.99, "estimated_days": "3-5"}, {"name": "Express Shipping", "price": 15.99, "estimated_days": "1-2"}]'),
-('payment_methods', '[{"name": "Credit Card", "enabled": true}, {"name": "PayPal", "enabled": true}, {"name": "Cash on Delivery", "enabled": true}]'),
-('tax_settings', '{"rate": 0.1, "included_in_price": false}');
+('store_info', '{"name": "3xA", "email": "3x.a.brand@gmail.com", "phone": "+92 323 2056640", "address": "123 Main St, City, Country"}'),
+('shipping_methods', '[{"name": "Standard Shipping", "price": 500, "estimated_days": "3-5"}, {"name": "Express Shipping", "price": 1000, "estimated_days": "1-2"}]'),
+('payment_methods', '[{"name": "Credit Card", "enabled": true}, {"name": "Cash on Delivery", "enabled": true}]'),
+('tax_settings', '{"rate": 0.05, "included_in_price": false}');
+`

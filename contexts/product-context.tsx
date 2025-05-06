@@ -35,22 +35,38 @@ function mapDbProductToProduct(dbProduct: any): Product {
     stock: dbProduct.stock,
     featured: dbProduct.featured,
     darazLink: dbProduct.daraz_link || undefined,
+    // Add new fields
+    slug: dbProduct.slug || dbProduct.name.toLowerCase().replace(/\s+/g, "-"),
+    salePrice: dbProduct.sale_price || null,
+    images: dbProduct.images || [],
+    categoryId: dbProduct.category_id || null,
+    specifications: dbProduct.specifications || {},
+    tags: dbProduct.tags || [],
   }
 }
 
 // Helper function to convert from app format to database format
 function mapProductToDbProduct(product: Product | Omit<Product, "id">) {
+  // Generate a slug if not provided
+  const slug = "slug" in product && product.slug ? product.slug : product.name.toLowerCase().replace(/\s+/g, "-")
+
   return {
     name: product.name,
+    slug: slug,
     description: product.description,
     price: product.price,
+    sale_price: "salePrice" in product ? product.salePrice : null,
     image: product.image,
+    images: "images" in product ? product.images : [],
+    category_id: "categoryId" in product ? product.categoryId : null,
     category: product.category,
     rating: product.rating,
     review_count: product.reviewCount,
     stock: product.stock,
     featured: product.featured,
     daraz_link: product.darazLink || null,
+    specifications: "specifications" in product ? product.specifications : {},
+    tags: "tags" in product ? product.tags : [],
   }
 }
 
@@ -73,24 +89,49 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     try {
       // Try to fetch from Supabase if configured
       if (isSupabaseConfigured && supabase) {
-        const { data: dbProducts, error } = await supabase
-          .from("products")
-          .select("*")
-          .order("created_at", { ascending: false })
+        try {
+          // Add a timeout to the fetch operation
+          const timeoutPromise = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Supabase connection timed out")), 5000),
+          )
 
-        if (error) {
-          throw error
-        }
+          const fetchPromise = supabase.from("products").select("*").order("created_at", { ascending: false })
 
-        if (dbProducts && dbProducts.length > 0) {
-          // Map database products to our app's product format
-          const mappedProducts = dbProducts.map(mapDbProductToProduct)
-          setProducts(mappedProducts)
-          return
+          // Race between the fetch and the timeout
+          const { data: dbProducts, error } = (await Promise.race([
+            fetchPromise,
+            timeoutPromise.then(() => {
+              throw new Error("Connection timed out")
+            }),
+          ])) as any
+
+          if (error) {
+            // If the error is about the table not existing, we'll handle it gracefully
+            if (error.message && error.message.includes("does not exist")) {
+              console.warn("Products table does not exist yet. Using local data instead.")
+              // Continue to the fallback logic below
+            } else {
+              throw error
+            }
+          } else if (dbProducts && dbProducts.length > 0) {
+            // Map database products to our app's product format
+            const mappedProducts = dbProducts.map(mapDbProductToProduct)
+            setProducts(mappedProducts)
+            return
+          }
+        } catch (supabaseError) {
+          console.error("Supabase error:", supabaseError)
+          // Log more details about the error
+          if (supabaseError instanceof Error) {
+            console.error("Error message:", supabaseError.message)
+            console.error("Error stack:", supabaseError.stack)
+          }
+          // Continue to fallback logic
         }
       }
 
       // Fallback to localStorage or use initial data
+      console.log("Falling back to local data")
       const savedProducts = localStorage.getItem("products")
       if (savedProducts) {
         const parsedProducts = JSON.parse(savedProducts)

@@ -10,6 +10,7 @@ import { OrderProvider } from "@/contexts/order-context"
 import { ProductProvider } from "@/contexts/product-context"
 import { AuthProvider } from "@/contexts/auth-context"
 import { Toaster } from "@/components/ui/toaster"
+import SupabaseStatusChecker from "@/components/supabase-status-checker"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -31,6 +32,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <SupabaseStatusChecker />
           <AuthProvider>
             <ProductProvider>
               <CartProvider>

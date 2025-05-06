@@ -4,9 +4,62 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ShoppingBag, Users, CreditCard, Package, ArrowUpRight, ArrowDownRight } from "lucide-react"
 import SupabaseSetupGuide from "@/components/admin/supabase-setup-guide"
-import { isSupabaseConfigured } from "@/lib/supabase"
+import { isSupabaseConfigured, useSupabaseClient } from "@/lib/supabase"
+import { useState, useEffect } from "react"
+import DatabaseSetup from "@/components/admin/database-setup"
 
 export default function AdminDashboard() {
+  const [tablesExist, setTablesExist] = useState<boolean | null>(null)
+  const supabase = useSupabaseClient()
+
+  useEffect(() => {
+    // Check if the products table exists
+    async function checkTables() {
+      if (!isSupabaseConfigured || !supabase) {
+        setTablesExist(false)
+        return
+      }
+
+      try {
+        // Try to fetch a single product to see if the table exists
+        const { error } = await supabase.from("products").select("id").limit(1)
+
+        if (error && error.message.includes("does not exist")) {
+          setTablesExist(false)
+        } else {
+          setTablesExist(true)
+        }
+      } catch (error) {
+        console.error("Error checking tables:", error)
+        setTablesExist(false)
+      }
+    }
+
+    checkTables()
+  }, [supabase])
+
+  // Show loading state while checking
+  if (tablesExist === null) {
+    return (
+      <div>
+        <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+        <div className="flex items-center justify-center p-12">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-emerald-600"></div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show database setup if tables don't exist
+  if (!tablesExist) {
+    return (
+      <div>
+        <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
+        <DatabaseSetup />
+      </div>
+    )
+  }
+
   return (
     <div>
       <h1 className="mb-6 text-3xl font-bold">Dashboard</h1>
