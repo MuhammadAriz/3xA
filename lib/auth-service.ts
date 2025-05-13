@@ -53,6 +53,9 @@ export const AuthService = {
         role: "customer",
       }
 
+      // Store authentication state in localStorage for development
+      localStorage.setItem("user", JSON.stringify(user))
+
       return { user, error: null }
     } catch (error) {
       console.error("Registration failed:", error)
@@ -132,6 +135,9 @@ export const AuthService = {
             role: "customer",
           }
 
+          // Store in localStorage for development
+          localStorage.setItem("user", JSON.stringify(user))
+
           return { user, error: null }
         }
 
@@ -145,6 +151,14 @@ export const AuthService = {
         username: userData.username || userData.email.split("@")[0],
         email: userData.email,
         role: userData.role,
+      }
+
+      // Store in localStorage for development
+      localStorage.setItem("user", JSON.stringify(user))
+
+      // Set admin flag if user is admin
+      if (user.role === "admin") {
+        localStorage.setItem("adminAuthenticated", "true")
       }
 
       return { user, error: null }
@@ -163,7 +177,11 @@ export const AuthService = {
       // Check localStorage first for development
       const storedUser = localStorage.getItem("user")
       if (storedUser) {
-        return JSON.parse(storedUser)
+        const user = JSON.parse(storedUser)
+        // Verify user data is valid
+        if (user && user.id && user.email) {
+          return user
+        }
       }
 
       if (!isSupabaseConfigured || !supabase) {
@@ -188,12 +206,17 @@ export const AuthService = {
         return null
       }
 
-      return {
+      const user = {
         id: userData.id,
         username: userData.username || userData.email.split("@")[0],
         email: userData.email,
         role: userData.role,
       }
+
+      // Update localStorage
+      localStorage.setItem("user", JSON.stringify(user))
+
+      return user
     } catch (error) {
       console.error("Failed to get current user:", error)
       return null

@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ShoppingCart } from "lucide-react"
@@ -15,8 +16,36 @@ function formatPrice(price: number): string {
   return `PKR ${price.toLocaleString()}`
 }
 
+// Helper function to check if a URL is valid
+function isValidImageUrl(url: string): boolean {
+  // Check if it's a valid URL format
+  if (!url) return false
+
+  // Don't use blob URLs as they're temporary and session-specific
+  if (url.startsWith("blob:")) return false
+
+  // Allow data URLs (base64 encoded images)
+  if (url.startsWith("data:image/")) return true
+
+  // Check if it's a valid HTTP URL
+  try {
+    const urlObj = new URL(url)
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:"
+  } catch (e) {
+    return false
+  }
+}
+
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart()
+  const [imageError, setImageError] = useState(false)
+
+  // Pre-validate the image URL
+  useEffect(() => {
+    if (product.image && !isValidImageUrl(product.image)) {
+      setImageError(true)
+    }
+  }, [product.image])
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault() // Prevent navigation
@@ -31,6 +60,16 @@ export default function ProductCard({ product }: { product: Product }) {
     })
   }
 
+  // Determine the image URL to use
+  const shouldUseDefaultImage =
+    imageError ||
+    !product.image ||
+    product.image.trim() === "" ||
+    product.image.startsWith("blob:") ||
+    !isValidImageUrl(product.image)
+
+  const imageUrl = shouldUseDefaultImage ? "/placeholder.svg" : product.image
+
   return (
     <div className="group relative rounded-lg border bg-white p-4 transition-all hover:shadow-md">
       {product.darazLink && (
@@ -42,11 +81,12 @@ export default function ProductCard({ product }: { product: Product }) {
       <Link href={`/products/${product.id}`} className="block overflow-hidden">
         <div className="relative aspect-square overflow-hidden rounded-md bg-gray-100">
           <Image
-            src={product.image || "/placeholder.svg"}
+            src={imageUrl || "/placeholder.svg"}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            onError={() => setImageError(true)}
           />
         </div>
 

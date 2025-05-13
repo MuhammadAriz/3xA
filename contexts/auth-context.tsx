@@ -34,18 +34,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is authenticated on initial load
   useEffect(() => {
+    let isMounted = true
+
     const checkAuthentication = async () => {
       try {
         const authenticated = await checkAuth()
-        setIsAuthenticated(authenticated)
+
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setIsAuthenticated(authenticated)
+          setIsLoading(false)
+        }
       } catch (error) {
         console.error("Authentication check failed:", error)
-      } finally {
-        setIsLoading(false)
+        if (isMounted) {
+          setIsLoading(false)
+        }
       }
     }
 
     checkAuthentication()
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   // This function will check authentication with Supabase or localStorage
@@ -74,22 +87,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         setError(error)
+        setIsLoading(false)
         return false
       }
 
       if (user) {
         setUser(user)
         setIsAuthenticated(true)
+        setIsLoading(false)
         return true
       }
 
+      setIsLoading(false)
       return false
     } catch (error) {
       console.error("Login failed:", error)
       setError(error instanceof Error ? error.message : "Login failed")
-      return false
-    } finally {
       setIsLoading(false)
+      return false
     }
   }
 
@@ -102,22 +117,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         setError(error)
+        setIsLoading(false)
         return false
       }
 
       if (user) {
         setUser(user)
         setIsAuthenticated(true)
+        setIsLoading(false)
         return true
       }
 
+      setIsLoading(false)
       return false
     } catch (error) {
       console.error("Registration failed:", error)
       setError(error instanceof Error ? error.message : "Registration failed")
-      return false
-    } finally {
       setIsLoading(false)
+      return false
     }
   }
 

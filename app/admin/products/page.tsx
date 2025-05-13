@@ -1,27 +1,13 @@
-"use client"
-
-import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus } from "lucide-react"
 import ProductsTable from "@/components/admin/products-table"
+import StorageSetupGuide from "@/components/admin/storage-setup-guide"
 
 export default function ProductsPage() {
-  const [isClient, setIsClient] = useState(false)
-
-  // Use this to ensure hydration
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
-
-  if (!isClient) {
-    return null // Return nothing during SSR to prevent hydration mismatch
-  }
-
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Products</h1>
         <Button asChild>
           <Link href="/admin/products/new">
@@ -30,15 +16,12 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Products</CardTitle>
-          <CardDescription>Manage your product inventory, prices, and details.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ProductsTable />
-        </CardContent>
-      </Card>
+      {/* Storage setup guide will only show instructions if needed */}
+      <StorageSetupGuide />
+
+      <div className="mt-8">
+        <ProductsTable />
+      </div>
     </div>
   )
 }

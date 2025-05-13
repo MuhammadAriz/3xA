@@ -6,15 +6,7 @@ import Image from "next/image"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Edit, MoreHorizontal, Trash2, Eye } from "lucide-react"
+import { Edit, Trash2, Eye, RefreshCw } from "lucide-react"
 import { useProducts } from "@/contexts/product-context"
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -27,20 +19,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import LoadingOverlay from "@/components/loading-overlay"
 
 export default function ProductsTable() {
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
-  const { products, deleteProduct, isLoading, refreshProducts } = useProducts()
+  const { products, deleteProduct, isLoading, refreshProducts, error } = useProducts()
   const { toast } = useToast()
   const [isClient, setIsClient] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Use this to ensure hydration
   useEffect(() => {
     setIsClient(true)
-    // Refresh products when component mounts
-    refreshProducts().catch(console.error)
-  }, [refreshProducts])
+  }, [])
+
+  // Separate effect for refreshing products to avoid dependency issues
+  useEffect(() => {
+    if (isClient) {
+      handleRefreshProducts()
+    }
+  }, [isClient])
+
+  const handleRefreshProducts = async () => {
+    try {
+      setIsRefreshing(true)
+      await refreshProducts()
+    } catch (error) {
+      console.error("Failed to refresh products:", error)
+      toast({
+        title: "Error",
+        description: "Failed to load products. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const filteredProducts = products.filter(
     (product) =>
@@ -51,12 +66,16 @@ export default function ProductsTable() {
   const handleDeleteProduct = async () => {
     if (deleteProductId) {
       try {
+        setIsRefreshing(true)
         await deleteProduct(deleteProductId)
         toast({
           title: "Product deleted",
           description: "The product has been deleted successfully.",
         })
+        // Refresh the products list after deletion
+        await refreshProducts()
       } catch (error) {
+        console.error("Error deleting product:", error)
         toast({
           title: "Error",
           description: "Failed to delete product. Please try again.",
@@ -64,6 +83,7 @@ export default function ProductsTable() {
         })
       } finally {
         setDeleteProductId(null)
+        setIsRefreshing(false)
       }
     }
   }
@@ -72,24 +92,37 @@ export default function ProductsTable() {
     return null // Return nothing during SSR to prevent hydration mismatch
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-40 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-emerald-600"></div>
-      </div>
-    )
-  }
-
   return (
-    <div>
-      <div className="mb-4 flex items-center gap-2">
+    <div className="relative">
+      {(isLoading || isRefreshing) && <LoadingOverlay />}
+
+      <div className="mb-4 flex items-center justify-between gap-2">
         <Input
           placeholder="Search products..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleRefreshProducts}
+          disabled={isRefreshing}
+          title="Refresh products"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+        </Button>
       </div>
+
+      {error && (
+        <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800">
+          <p className="font-medium">Error loading products</p>
+          <p className="text-sm">{error}</p>
+          <Button variant="outline" size="sm" onClick={handleRefreshProducts} className="mt-2" disabled={isRefreshing}>
+            Try Again
+          </Button>
+        </div>
+      )}
 
       <div className="rounded-md border">
         <Table>
@@ -107,7 +140,7 @@ export default function ProductsTable() {
             {filteredProducts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  No products found.
+                  {isLoading ? "Loading products..." : "No products found."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -132,37 +165,26 @@ export default function ProductsTable() {
                   <TableCell>{product.stock}</TableCell>
                   <TableCell>{product.featured ? "Yes" : "No"}</TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Open menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                          <Link href={`/products/${product.id}`} className="flex w-full cursor-pointer items-center">
-                            <Eye className="mr-2 h-4 w-4" /> View
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            href={`/admin/products/${product.id}/edit`}
-                            className="flex w-full cursor-pointer items-center"
-                          >
-                            <Edit className="mr-2 h-4 w-4" /> Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => setDeleteProductId(product.id)}
-                          className="flex cursor-pointer items-center text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/products/${product.id}`}>
+                          <Eye className="mr-1 h-4 w-4" /> View
+                        </Link>
+                      </Button>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link href={`/admin/products/${product.id}/edit`}>
+                          <Edit className="mr-1 h-4 w-4" /> Edit
+                        </Link>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setDeleteProductId(product.id)}
+                      >
+                        <Trash2 className="mr-1 h-4 w-4" /> Delete
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

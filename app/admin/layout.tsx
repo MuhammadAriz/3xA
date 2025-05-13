@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { Suspense } from "react"
 import AdminSidebar from "@/components/admin/admin-sidebar"
@@ -12,22 +12,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter()
   const pathname = usePathname()
   const { isAuthenticated, isLoading, checkAuth } = useAuth()
+  const [authChecked, setAuthChecked] = useState(false)
 
   useEffect(() => {
     const verifyAuth = async () => {
-      const authenticated = await checkAuth()
+      try {
+        // Only check auth once to prevent infinite loops
+        if (!authChecked) {
+          const authenticated = await checkAuth()
+          setAuthChecked(true)
 
-      // If not authenticated and not on login page, redirect to login
-      if (!authenticated && pathname !== "/admin/login") {
-        router.push("/admin/login")
+          // If not authenticated and not already on login page, redirect to login
+          if (!authenticated && pathname !== "/admin/login") {
+            console.log("Not authenticated, redirecting to login")
+            router.push("/admin/login")
+          }
+        }
+      } catch (error) {
+        console.error("Auth verification error:", error)
+        setAuthChecked(true)
       }
     }
 
     verifyAuth()
-  }, [pathname, router, checkAuth])
+  }, [pathname, router, checkAuth, authChecked])
 
   // Show loading state
-  if (isLoading) {
+  if (isLoading && !authChecked) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-emerald-600"></div>
@@ -35,18 +46,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  // If not authenticated, don't render the admin layout
-  if (!isAuthenticated && pathname !== "/admin/login") {
-    return null
-  }
-
   // If on login page, don't show the sidebar
   if (pathname === "/admin/login") {
     return <>{children}</>
   }
 
+  // If not authenticated and not on login page, don't render anything yet
+  if (!isAuthenticated && pathname !== "/admin/login" && !authChecked) {
+    return null
+  }
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen pt-16">
       <AdminSidebar />
       <div className="flex-1 p-8">
         <Suspense fallback={<div>Loading...</div>}>{children}</Suspense>

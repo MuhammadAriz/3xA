@@ -13,7 +13,32 @@ import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "@/components/ui/use-toast"
 import { useProducts } from "@/contexts/product-context"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, LinkIcon } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import LoadingOverlay from "@/components/loading-overlay"
+import { useSupabaseClient } from "@/lib/supabase"
+import ImageUpload from "./image-upload"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
+// Helper function to check if a URL is valid
+function isValidImageUrl(url: string): boolean {
+  // Check if it's a valid URL format
+  if (!url) return false
+
+  // Don't use blob URLs as they're temporary and session-specific
+  if (url.startsWith("blob:")) return false
+
+  // Allow data URLs (base64 encoded images)
+  if (url.startsWith("data:image/")) return true
+
+  // Check if it's a valid HTTP URL
+  try {
+    const urlObj = new URL(url)
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:"
+  } catch (e) {
+    return false
+  }
+}
 
 export default function ProductForm() {
   const router = useRouter()
@@ -22,42 +47,109 @@ export default function ProductForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([])
+  const [loadingCategories, setLoadingCategories] = useState(false)
+  const supabase = useSupabaseClient()
+  const [activeTab, setActiveTab] = useState<string>("upload")
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    price: 0,
-    image: "/placeholder.svg?height=400&width=400",
+    price: "",
+    image: "",
     category: "",
-    rating: 5,
-    reviewCount: 0,
-    stock: 0,
+    categoryId: "",
+    rating: "5",
+    reviewCount: "0",
+    stock: "0",
     featured: false,
     darazLink: "",
+    slug: "", // Added slug field
   })
 
+  // Fetch categories from the database
   useEffect(() => {
-    if (params?.id) {
-      setIsLoading(true)
-      const product = getProductById(params.id as string)
-      if (product) {
-        setFormData({
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          image: product.image,
-          category: product.category,
-          rating: product.rating,
-          reviewCount: product.reviewCount,
-          stock: product.stock,
-          featured: product.featured,
-          darazLink: product.darazLink || "",
-        })
-      } else {
-        setError("Product not found")
+    const fetchCategories = async () => {
+      setLoadingCategories(true)
+      try {
+        if (supabase) {
+          const { data, error } = await supabase.from("categories").select("id, name").order("name")
+
+          if (error) throw error
+
+          setCategories(data || [])
+        } else {
+          // Fallback to mock data if Supabase is not available
+          setCategories([
+            { id: "1", name: "Electronics" },
+            { id: "2", name: "Clothing" },
+            { id: "3", name: "Home & Kitchen" },
+            { id: "4", name: "Books" },
+            { id: "5", name: "Toys & Games" },
+          ])
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error)
+        // Fallback to mock data
+        setCategories([
+          { id: "1", name: "Electronics" },
+          { id: "2", name: "Clothing" },
+          { id: "3", name: "Home & Kitchen" },
+          { id: "4", name: "Books" },
+          { id: "5", name: "Toys & Games" },
+        ])
+      } finally {
+        setLoadingCategories(false)
       }
-      setIsLoading(false)
     }
+
+    fetchCategories()
+  }, [supabase])
+
+  useEffect(() => {
+    const loadProduct = async () => {
+      if (params?.id) {
+        setIsLoading(true)
+        try {
+          const product = await getProductById(params.id as string)
+          if (product) {
+            // Skip blob URLs as they're temporary
+            const imageUrl = product.image && product.image.startsWith("blob:") ? "" : product.image || ""
+
+            setFormData({
+              name: product.name,
+              description: product.description,
+              price: product.price.toString(),
+              image: imageUrl,
+              category: product.category,
+              categoryId: product.categoryId || "",
+              rating: product.rating.toString(),
+              reviewCount: product.reviewCount.toString(),
+              stock: product.stock.toString(),
+              featured: product.featured,
+              darazLink: product.darazLink || "",
+              slug: product.slug || "", // Set slug if available
+            })
+
+            // Set the appropriate tab based on the image URL format
+            if (imageUrl && (imageUrl.startsWith("data:") || imageUrl.includes("supabase"))) {
+              setActiveTab("upload")
+            } else if (imageUrl) {
+              setActiveTab("url")
+            }
+          } else {
+            setError("Product not found")
+          }
+        } catch (err) {
+          console.error("Error loading product:", err)
+          setError("Failed to load product details")
+        } finally {
+          setIsLoading(false)
+        }
+      }
+    }
+
+    loadProduct()
   }, [params?.id, getProductById])
 
   // Set error from context
@@ -68,11 +160,23 @@ export default function ProductForm() {
   }, [contextError])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [name]: type === "number" ? Number.parseFloat(value) : value,
+      [name]: value,
     })
+
+    // Generate slug when name changes (only for new products)
+    if (name === "name" && !params?.id && !formData.slug) {
+      const generatedSlug = value
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, "")
+        .replace(/\s+/g, "-")
+      setFormData((prev) => ({
+        ...prev,
+        slug: generatedSlug,
+      }))
+    }
   }
 
   const handleCheckboxChange = (checked: boolean) => {
@@ -82,17 +186,64 @@ export default function ProductForm() {
     })
   }
 
+  const handleCategoryChange = (value: string) => {
+    const selectedCategory = categories.find((cat) => cat.id === value)
+
+    setFormData({
+      ...formData,
+      categoryId: value,
+      category: selectedCategory ? selectedCategory.name : formData.category,
+    })
+  }
+
+  const handleImageChange = (url: string | null) => {
+    // Don't store blob URLs as they're temporary
+    if (url && url.startsWith("blob:")) {
+      console.warn("Blob URL detected, not storing:", url)
+      return
+    }
+
+    setFormData({
+      ...formData,
+      image: url || "",
+    })
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setError(null)
 
     try {
+      // Validate image URL if using direct URL
+      if (activeTab === "url" && formData.image) {
+        if (!isValidImageUrl(formData.image)) {
+          setError("Please enter a valid image URL")
+          setIsSubmitting(false)
+          return
+        }
+      }
+
+      // Don't store blob URLs as they're temporary
+      const imageUrl = formData.image && formData.image.startsWith("blob:") ? "" : formData.image
+
+      // Convert string values to numbers for submission
+      const productData = {
+        ...formData,
+        image: imageUrl,
+        price: Number.parseFloat(formData.price) || 0,
+        rating: Number.parseFloat(formData.rating) || 5,
+        reviewCount: Number.parseInt(formData.reviewCount) || 0,
+        stock: Number.parseInt(formData.stock) || 0,
+      }
+
+      console.log("Saving product with image:", imageUrl)
+
       if (params?.id) {
         // Update existing product
         await updateProduct({
           id: params.id as string,
-          ...formData,
+          ...productData,
         })
         toast({
           title: "Product updated",
@@ -100,7 +251,7 @@ export default function ProductForm() {
         })
       } else {
         // Add new product
-        await addProduct(formData)
+        await addProduct(productData)
         toast({
           title: "Product created",
           description: `${formData.name} has been created successfully.`,
@@ -108,8 +259,15 @@ export default function ProductForm() {
       }
 
       router.push("/admin/products")
-    } catch (error) {
-      setError("Failed to save product. Please try again.")
+    } catch (error: any) {
+      console.error("Failed to save product:", error)
+
+      // Handle specific errors
+      if (error.message && error.message.includes("duplicate key") && error.message.includes("slug")) {
+        setError("A product with this name already exists. Please use a different name or modify the slug.")
+      } else {
+        setError("Failed to save product. Please try again.")
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -117,8 +275,8 @@ export default function ProductForm() {
 
   if (isLoading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-300 border-t-emerald-600"></div>
+      <div className="relative min-h-[60vh]">
+        <LoadingOverlay />
       </div>
     )
   }
@@ -142,7 +300,25 @@ export default function ProductForm() {
 
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Input id="category" name="category" value={formData.category} onChange={handleChange} required />
+              <Select value={formData.categoryId} onValueChange={handleCategoryChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingCategories ? (
+                    <div className="flex items-center justify-center p-2">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-emerald-600"></div>
+                      <span className="ml-2">Loading...</span>
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -187,16 +363,51 @@ export default function ProductForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="image">Image URL</Label>
+              <Label htmlFor="slug">Slug (URL Path)</Label>
               <Input
-                id="image"
-                name="image"
-                value={formData.image}
+                id="slug"
+                name="slug"
+                value={formData.slug}
                 onChange={handleChange}
-                placeholder="/placeholder.svg"
-                required
+                placeholder="product-url-path"
+                className="font-mono text-sm"
               />
+              <p className="text-xs text-gray-500">Leave empty to generate automatically from name</p>
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Product Image</Label>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="upload">Upload Image</TabsTrigger>
+                <TabsTrigger value="url">Direct URL</TabsTrigger>
+              </TabsList>
+              <TabsContent value="upload" className="pt-4">
+                <ImageUpload
+                  initialImage={activeTab === "upload" ? formData.image : undefined}
+                  onImageChange={handleImageChange}
+                />
+              </TabsContent>
+              <TabsContent value="url" className="pt-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <LinkIcon className="h-4 w-4 text-gray-500" />
+                    <Label htmlFor="imageUrl">Image URL</Label>
+                  </div>
+                  <Input
+                    id="imageUrl"
+                    name="image"
+                    value={formData.image}
+                    onChange={handleChange}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Enter a direct URL to an image (e.g., https://example.com/image.jpg)
+                  </p>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

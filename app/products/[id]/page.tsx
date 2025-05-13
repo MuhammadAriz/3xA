@@ -17,20 +17,58 @@ function formatPrice(price: number): string {
   return `PKR ${price.toLocaleString()}`
 }
 
+// Helper function to check if a URL is valid
+function isValidImageUrl(url: string): boolean {
+  // Check if it's a valid URL format
+  if (!url) return false
+
+  // Don't use blob URLs as they're temporary and session-specific
+  if (url.startsWith("blob:")) return false
+
+  // Allow data URLs (base64 encoded images)
+  if (url.startsWith("data:image/")) return true
+
+  // Check if it's a valid HTTP URL
+  try {
+    const urlObj = new URL(url)
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:"
+  } catch (e) {
+    return false
+  }
+}
+
 export default function ProductPage() {
   const params = useParams()
   const { getProductById } = useProducts()
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
-    if (params.id) {
-      const foundProduct = getProductById(params.id as string)
-      if (foundProduct) {
-        setProduct(foundProduct)
+    const fetchProduct = async () => {
+      setLoading(true)
+      try {
+        if (params.id) {
+          const foundProduct = await getProductById(params.id as string)
+          if (foundProduct) {
+            console.log("Product loaded with image:", foundProduct.image)
+            setProduct(foundProduct)
+
+            // Pre-validate the image URL
+            if (foundProduct.image && !isValidImageUrl(foundProduct.image)) {
+              console.warn("Invalid image URL detected:", foundProduct.image)
+              setImageError(true)
+            }
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
+
+    fetchProduct()
   }, [params.id, getProductById])
 
   if (loading) {
@@ -45,6 +83,16 @@ export default function ProductPage() {
     notFound()
   }
 
+  // Determine the image URL to use
+  const shouldUseDefaultImage =
+    imageError ||
+    !product.image ||
+    product.image.trim() === "" ||
+    product.image.startsWith("blob:") ||
+    !isValidImageUrl(product.image)
+
+  const imageUrl = shouldUseDefaultImage ? "/placeholder.svg" : product.image
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Link
@@ -58,12 +106,16 @@ export default function ProductPage() {
       <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
         <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
           <Image
-            src={product.image || "/placeholder.svg"}
+            src={imageUrl || "/placeholder.svg"}
             alt={product.name}
             fill
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
+            onError={() => {
+              console.error("Image failed to load:", product.image)
+              setImageError(true)
+            }}
           />
         </div>
 

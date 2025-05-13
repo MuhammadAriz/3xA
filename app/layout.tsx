@@ -2,25 +2,22 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
 import { ThemeProvider } from "@/components/theme-provider"
-import { CartProvider } from "@/contexts/cart-context"
-import { OrderProvider } from "@/contexts/order-context"
-import { ProductProvider } from "@/contexts/product-context"
-import { AuthProvider } from "@/contexts/auth-context"
 import { Toaster } from "@/components/ui/toaster"
-import SupabaseStatusChecker from "@/components/supabase-status-checker"
+import { ProductProvider } from "@/contexts/product-context"
+import { CartProvider } from "@/contexts/cart-context"
+import { FilterProvider } from "@/contexts/filter-context"
+import { OrderProvider } from "@/contexts/order-context"
+import { AuthProvider } from "@/contexts/auth-context"
+import { CategoryProvider } from "@/contexts/category-context"
+import Header from "@/components/header"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "3xA | Quality Products",
-  description: "Discover our collection of high-quality products",
-  generator: "v0.dev",
-  icons: {
-    icon: "/favicon.ico",
-  },
+  title: "E-Commerce Store",
+  description: "A modern e-commerce store built with Next.js",
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -29,23 +26,25 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en">
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <SupabaseStatusChecker />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AuthProvider>
-            <ProductProvider>
-              <CartProvider>
-                <OrderProvider>
-                  <div className="flex min-h-screen flex-col">
-                    <Header />
-                    <main className="flex-1">{children}</main>
-                    <Footer />
-                  </div>
-                  <Toaster />
-                </OrderProvider>
-              </CartProvider>
-            </ProductProvider>
+            <CategoryProvider>
+              <ProductProvider>
+                <CartProvider>
+                  <FilterProvider>
+                    <OrderProvider>
+                      <div className="flex min-h-screen flex-col">
+                        <Header />
+                        <main className="flex-1">{children}</main>
+                        <Toaster />
+                      </div>
+                    </OrderProvider>
+                  </FilterProvider>
+                </CartProvider>
+              </ProductProvider>
+            </CategoryProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

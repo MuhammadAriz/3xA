@@ -417,12 +417,12 @@ CREATE TABLE IF NOT EXISTS settings (
 
 -- Create triggers to update the updated_at column
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Apply the trigger to all tables with updated_at column
 CREATE TRIGGER update_products_updated_at
@@ -467,7 +467,7 @@ EXECUTE FUNCTION update_updated_at_column();
 
 -- Create function to update product rating when reviews are added/updated/deleted
 CREATE OR REPLACE FUNCTION update_product_rating()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 DECLARE
   avg_rating NUMERIC;
   review_count INTEGER;
@@ -487,7 +487,7 @@ BEGIN
   
   RETURN NULL;
 END;
-$$ LANGUAGE plpgsql;
+$ LANGUAGE plpgsql;
 
 -- Create triggers for the review rating function
 CREATE TRIGGER review_inserted
@@ -504,207 +504,3 @@ CREATE TRIGGER review_deleted
 AFTER DELETE ON reviews
 FOR EACH ROW
 EXECUTE FUNCTION update_product_rating();
-
--- Create Row Level Security (RLS) policies
--- Enable RLS on all tables
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
-ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cart ENABLE ROW LEVEL SECURITY;
-ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
-
--- Create a function to check if a user is an admin
-CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN (
-    SELECT role = 'admin'
-    FROM users
-    WHERE id = auth.uid()
-  );
-EXCEPTION
-  WHEN OTHERS THEN
-    RETURN FALSE;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Products policies
-CREATE POLICY "Allow public read access to products" 
-ON products FOR SELECT 
-USING (true);
-
-CREATE POLICY "Allow admin to insert products" 
-ON products FOR INSERT 
-TO authenticated
-USING (is_admin());
-
-CREATE POLICY "Allow admin to update products" 
-ON products FOR UPDATE 
-TO authenticated
-USING (is_admin());
-
-CREATE POLICY "Allow admin to delete products" 
-ON products FOR DELETE 
-TO authenticated
-USING (is_admin());
-
--- Categories policies
-CREATE POLICY "Allow public read access to categories" 
-ON categories FOR SELECT 
-USING (true);
-
-CREATE POLICY "Allow admin to insert categories" 
-ON categories FOR INSERT 
-TO authenticated
-USING (is_admin());
-
-CREATE POLICY "Allow admin to update categories" 
-ON categories FOR UPDATE 
-TO authenticated
-USING (is_admin());
-
-CREATE POLICY "Allow admin to delete categories" 
-ON categories FOR DELETE 
-TO authenticated
-USING (is_admin());
-
--- Users policies
-CREATE POLICY "Allow users to read their own user data" 
-ON users FOR SELECT 
-TO authenticated
-USING (id = auth.uid() OR is_admin());
-
-CREATE POLICY "Allow admin to read all users" 
-ON users FOR SELECT 
-TO authenticated
-USING (is_admin());
-
-CREATE POLICY "Allow users to update their own user data" 
-ON users FOR UPDATE 
-TO authenticated
-USING (id = auth.uid() OR is_admin());
-
-CREATE POLICY "Allow admin to insert users" 
-ON users FOR INSERT 
-TO authenticated
-USING (is_admin());
-
--- Orders policies
-CREATE POLICY "Allow users to read their own orders" 
-ON orders FOR SELECT 
-TO authenticated
-USING (user_id = auth.uid() OR is_admin());
-
-CREATE POLICY "Allow users to insert their own orders" 
-ON orders FOR INSERT 
-TO authenticated
-USING (user_id = auth.uid() OR user_id IS NULL);
-
-CREATE POLICY "Allow users to update their own orders" 
-ON orders FOR UPDATE 
-TO authenticated
-USING (user_id = auth.uid() OR is_admin());
-
--- Order items policies
-CREATE POLICY "Allow users to read their own order items" 
-ON order_items FOR SELECT 
-TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM orders
-  WHERE orders.id = order_items.order_id 
-  AND (orders.user_id = auth.uid() OR is_admin())
-));
-
-CREATE POLICY "Allow users to insert their own order items" 
-ON order_items FOR INSERT 
-TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM orders
-  WHERE orders.id = order_items.order_id 
-  AND (orders.user_id = auth.uid() OR is_admin())
-));
-
--- Reviews policies
-CREATE POLICY "Allow public read access to reviews" 
-ON reviews FOR SELECT 
-USING (status = 'published' OR user_id = auth.uid() OR is_admin());
-
-CREATE POLICY "Allow authenticated users to insert reviews" 
-ON reviews FOR INSERT 
-TO authenticated
-USING (user_id = auth.uid());
-
-CREATE POLICY "Allow users to update their own reviews" 
-ON reviews FOR UPDATE 
-TO authenticated
-USING (user_id = auth.uid() OR is_admin());
-
-CREATE POLICY "Allow users to delete their own reviews" 
-ON reviews FOR DELETE 
-TO authenticated
-USING (user_id = auth.uid() OR is_admin());
-
--- Coupons policies
-CREATE POLICY "Allow public read access to active coupons" 
-ON coupons FOR SELECT 
-USING (is_active = true OR is_admin());
-
-CREATE POLICY "Allow admin to manage coupons" 
-ON coupons FOR ALL 
-TO authenticated
-USING (is_admin());
-
--- Wishlist policies
-CREATE POLICY "Allow users to manage their own wishlist" 
-ON wishlist FOR ALL 
-TO authenticated
-USING (user_id = auth.uid());
-
-CREATE POLICY "Allow admin to view all wishlists" 
-ON wishlist FOR SELECT 
-TO authenticated
-USING (is_admin());
-
--- Cart policies
-CREATE POLICY "Allow users to manage their own cart" 
-ON cart FOR ALL 
-TO authenticated
-USING (user_id = auth.uid());
-
-CREATE POLICY "Allow admin to view all carts" 
-ON cart FOR SELECT 
-TO authenticated
-USING (is_admin());
-
--- Settings policies
-CREATE POLICY "Allow public read access to settings" 
-ON settings FOR SELECT 
-USING (true);
-
-CREATE POLICY "Allow admin to manage settings" 
-ON settings FOR ALL 
-TO authenticated
-USING (is_admin());
-
--- Insert some initial categories
-INSERT INTO categories (name, slug, description)
-VALUES 
-('Electronics', 'electronics', 'Electronic devices and accessories'),
-('Clothing', 'clothing', 'Apparel and fashion items'),
-('Home & Kitchen', 'home-kitchen', 'Home and kitchen products'),
-('Books', 'books', 'Books and publications'),
-('Toys & Games', 'toys-games', 'Toys and games for all ages');
-
--- Insert some initial settings
-INSERT INTO settings (key, value)
-VALUES 
-('store_info', '{"name": "3xA", "email": "3x.a.brand@gmail.com", "phone": "+92 323 2056640", "address": "123 Main St, City, Country"}'),
-('shipping_methods', '[{"name": "Standard Shipping", "price": 500, "estimated_days": "3-5"}, {"name": "Express Shipping", "price": 1000, "estimated_days": "1-2"}]'),
-('payment_methods', '[{"name": "Credit Card", "enabled": true}, {"name": "Cash on Delivery", "enabled": true}]'),
-('tax_settings', '{"rate": 0.05, "included_in_price": false}');
-`

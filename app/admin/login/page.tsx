@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function AdminLoginPage() {
   const router = useRouter()
-  const { login, register, error: authError, isAuthenticated, isAdmin } = useAuth()
+  const { login, register, error: authError, isAuthenticated, isAdmin, checkAuth } = useAuth()
 
   // Login state
   const [email, setEmail] = useState("")
@@ -34,11 +34,22 @@ export default function AdminLoginPage() {
   const [regSuccess, setRegSuccess] = useState(false)
 
   useEffect(() => {
-    // If already authenticated and is admin, redirect to admin dashboard
-    if (isAuthenticated && isAdmin) {
-      router.push("/admin")
+    // Check if already authenticated
+    const verifyAuth = async () => {
+      try {
+        const authenticated = await checkAuth()
+
+        // If already authenticated and is admin, redirect to admin dashboard
+        if (authenticated && isAdmin) {
+          router.push("/admin")
+        }
+      } catch (error) {
+        console.error("Auth verification error:", error)
+      }
     }
-  }, [isAuthenticated, isAdmin, router])
+
+    verifyAuth()
+  }, [isAdmin, router, checkAuth])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -1,21 +1,24 @@
 "use client"
 
+import type React from "react"
+
 import { useState, useEffect } from "react"
 import { Loader2 } from "lucide-react"
 
-export default function LoadingOverlay() {
-  const [visible, setVisible] = useState(true)
+interface LoadingOverlayProps {
+  isLoading: boolean
+  children: React.ReactNode
+}
+
+export default function LoadingOverlay({ isLoading, children }: LoadingOverlayProps) {
+  const [visible, setVisible] = useState(isLoading)
 
   useEffect(() => {
     // Hide the loading overlay after a short delay
-    const timer = setTimeout(() => {
-      setVisible(false)
-    }, 500) // Short delay to prevent flashing
+    setVisible(isLoading)
+  }, [isLoading])
 
-    return () => clearTimeout(timer)
-  }, [])
-
-  if (!visible) return null
+  if (!visible) return <>{children}</>
 
   return (
     <div className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center transition-opacity duration-300">
