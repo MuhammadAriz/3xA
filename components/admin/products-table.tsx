@@ -2,13 +2,18 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Edit, Trash2, Eye, RefreshCw } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { useProducts } from "@/contexts/product-context"
-import { useToast } from "@/components/ui/use-toast"
+import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,192 +24,214 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Card } from "@/components/ui/card"
+import { formatCurrency } from "@/lib/format"
+import { Edit, MoreHorizontal, Trash2, Eye } from "lucide-react"
 import LoadingOverlay from "@/components/loading-overlay"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import Image from "next/image"
 
 export default function ProductsTable() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
-  const { products, deleteProduct, isLoading, refreshProducts, error } = useProducts()
-  const { toast } = useToast()
-  const [isClient, setIsClient] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const { products, isLoading, error, deleteProduct, refreshProducts } = useProducts()
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [productToDelete, setProductToDelete] = useState<string | null>(null)
+  const [filteredProducts, setFilteredProducts] = useState(products)
+  const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const [searchQuery, setSearchQuery] = useState<string>("")
+  const router = useRouter()
 
-  // Use this to ensure hydration
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+  // Get unique categories
+  const categories = Array.from(new Set(products.map((product) => product.category)))
 
-  // Separate effect for refreshing products to avoid dependency issues
+  // Filter products when filters change
   useEffect(() => {
-    if (isClient) {
-      handleRefreshProducts()
+    let filtered = [...products]
+
+    // Apply category filter
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((product) => product.category === categoryFilter)
     }
-  }, [isClient])
 
-  const handleRefreshProducts = async () => {
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(
+        (product) =>
+          product.name.toLowerCase().includes(query) ||
+          product.description.toLowerCase().includes(query) ||
+          product.category.toLowerCase().includes(query),
+      )
+    }
+
+    setFilteredProducts(filtered)
+  }, [products, categoryFilter, searchQuery])
+
+  const handleDelete = async (id: string) => {
+    setIsDeleting(true)
     try {
-      setIsRefreshing(true)
-      await refreshProducts()
+      await deleteProduct(id)
+      setProductToDelete(null)
     } catch (error) {
-      console.error("Failed to refresh products:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load products. Please try again.",
-        variant: "destructive",
-      })
+      console.error("Error deleting product:", error)
     } finally {
-      setIsRefreshing(false)
+      setIsDeleting(false)
     }
   }
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  const handleDeleteProduct = async () => {
-    if (deleteProductId) {
-      try {
-        setIsRefreshing(true)
-        await deleteProduct(deleteProductId)
-        toast({
-          title: "Product deleted",
-          description: "The product has been deleted successfully.",
-        })
-        // Refresh the products list after deletion
-        await refreshProducts()
-      } catch (error) {
-        console.error("Error deleting product:", error)
-        toast({
-          title: "Error",
-          description: "Failed to delete product. Please try again.",
-          variant: "destructive",
-        })
-      } finally {
-        setDeleteProductId(null)
-        setIsRefreshing(false)
-      }
-    }
-  }
-
-  if (!isClient) {
-    return null // Return nothing during SSR to prevent hydration mismatch
+  const handleRefresh = async () => {
+    await refreshProducts()
   }
 
   return (
     <div className="relative">
-      {(isLoading || isRefreshing) && <LoadingOverlay />}
-
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Input
-          placeholder="Search products..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="max-w-sm"
-        />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleRefreshProducts}
-          disabled={isRefreshing}
-          title="Refresh products"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-        </Button>
-      </div>
+      {isLoading && <LoadingOverlay />}
 
       {error && (
         <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800">
           <p className="font-medium">Error loading products</p>
           <p className="text-sm">{error}</p>
-          <Button variant="outline" size="sm" onClick={handleRefreshProducts} className="mt-2" disabled={isRefreshing}>
+          <Button variant="outline" size="sm" className="mt-2" onClick={handleRefresh}>
             Try Again
           </Button>
         </div>
       )}
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Featured</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredProducts.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  {isLoading ? "Loading products..." : "No products found."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredProducts.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-md">
-                        <Image
-                          src={product.image || "/placeholder.svg"}
-                          alt={product.name}
-                          width={40}
-                          height={40}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <span>{product.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{product.category}</TableCell>
-                  <TableCell>PKR {product.price.toLocaleString()}</TableCell>
-                  <TableCell>{product.stock}</TableCell>
-                  <TableCell>{product.featured ? "Yes" : "No"}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/products/${product.id}`}>
-                          <Eye className="mr-1 h-4 w-4" /> View
-                        </Link>
-                      </Button>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/products/${product.id}/edit`}>
-                          <Edit className="mr-1 h-4 w-4" /> Edit
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                        onClick={() => setDeleteProductId(product.id)}
-                      >
-                        <Trash2 className="mr-1 h-4 w-4" /> Delete
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+      <div className="mb-4 grid gap-4 md:grid-cols-2">
+        <div>
+          <Label htmlFor="category-filter">Filter by Category</Label>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger id="category-filter">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <Label htmlFor="search">Search Products</Label>
+          <Input
+            id="search"
+            placeholder="Search by name, description, or category"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
       </div>
 
-      <AlertDialog open={!!deleteProductId} onOpenChange={() => setDeleteProductId(null)}>
+      <Card>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[80px]">Image</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead className="text-right">Price</TableHead>
+                <TableHead className="text-center">Stock</TableHead>
+                <TableHead className="text-center">Featured</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    No products found.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="relative h-10 w-10 overflow-hidden rounded-md border bg-gray-100">
+                        {product.image ? (
+                          <Image
+                            src={product.image || "/placeholder.svg"}
+                            alt={product.name}
+                            fill
+                            className="object-cover"
+                            sizes="40px"
+                            onError={(e) => {
+                              // If image fails to load, replace with placeholder
+                              const target = e.target as HTMLImageElement
+                              target.src = "/placeholder.svg"
+                            }}
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
+                            No img
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>{product.category}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(product.price)}</TableCell>
+                    <TableCell className="text-center">{product.stock}</TableCell>
+                    <TableCell className="text-center">{product.featured ? "Yes" : "No"}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/products/${product.id}`}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/products/${product.id}/edit`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600" onClick={() => setProductToDelete(product.id)}>
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      <AlertDialog open={productToDelete !== null} onOpenChange={(open) => !open && setProductToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the product from your store.
+              This action cannot be undone. This will permanently delete the product.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProduct} className="bg-red-600 hover:bg-red-700">
-              Delete
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => productToDelete && handleDelete(productToDelete)}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

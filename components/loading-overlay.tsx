@@ -1,30 +1,9 @@
-"use client"
-
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import { Loader2 } from "lucide-react"
-
-interface LoadingOverlayProps {
-  isLoading: boolean
-  children: React.ReactNode
-}
-
-export default function LoadingOverlay({ isLoading, children }: LoadingOverlayProps) {
-  const [visible, setVisible] = useState(isLoading)
-
-  useEffect(() => {
-    // Hide the loading overlay after a short delay
-    setVisible(isLoading)
-  }, [isLoading])
-
-  if (!visible) return <>{children}</>
-
+export default function LoadingOverlay() {
   return (
-    <div className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center transition-opacity duration-300">
-      <div className="text-center">
-        <Loader2 className="h-8 w-8 animate-spin mx-auto text-emerald-600" />
-        <p className="mt-2 text-sm text-gray-600">Loading content...</p>
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-white bg-opacity-70">
+      <div className="flex flex-col items-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-gray-200 border-t-emerald-600"></div>
+        <p className="mt-2 text-sm font-medium text-gray-700">Loading...</p>
       </div>
     </div>
   )
