@@ -504,4 +504,4 @@ CREATE TRIGGER review_deleted
 AFTER DELETE ON reviews
 FOR EACH ROW
 EXECUTE FUNCTION update_product_rating();
-`
+`;
