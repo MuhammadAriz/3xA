@@ -1,43 +1,31 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { setupStorageBuckets } from "@/app/actions/storage-setup"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle } from "lucide-react"
 
 export default function StorageInitializer() {
-  const [status, setStatus] = useState<{
-    success: boolean
-    message: string
-    error?: string
-  } | null>(null)
+  const [initialized, setInitialized] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const initializeStorage = async () => {
+    const initStorage = async () => {
       try {
         const result = await setupStorageBuckets()
-        setStatus(result)
-      } catch (error) {
-        console.error("Error initializing storage:", error)
-        setStatus({
-          success: false,
-          message: "Error initializing storage. Using fallback image storage.",
-          error: String(error),
-        })
+        if (result.success) {
+          setInitialized(true)
+        } else {
+          console.warn("Storage initialization warning:", result.error)
+          // Don't set error here as it's not critical for the app to function
+        }
+      } catch (err) {
+        console.error("Failed to initialize storage:", err)
+        // Don't set error here as it's not critical for the app to function
       }
     }
 
-    initializeStorage()
+    initStorage()
   }, [])
 
-  if (!status || status.success) {
-    return null
-  }
-
-  return (
-    <Alert variant="warning" className="mb-4">
-      <AlertCircle className="h-4 w-4" />
-      <AlertDescription>{status.message}</AlertDescription>
-    </Alert>
-  )
+  // This component doesn't render anything visible
+  return null
 }
