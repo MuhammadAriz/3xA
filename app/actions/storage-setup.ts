@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js"
 
+// This function checks if storage is properly configured
 export async function checkStorageStatus() {
   try {
     // Create a Supabase client with the anon key (not service role)
@@ -48,7 +49,7 @@ export async function checkStorageStatus() {
   }
 }
 
-// Add the missing export that's being referenced elsewhere in the code
+// This function is exported and used elsewhere in the code
 export async function setupStorageBuckets() {
   // This is now just a wrapper around checkStorageStatus to maintain compatibility
   // It doesn't try to create buckets anymore to avoid RLS policy errors
