@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Trash2, ArrowLeft, ShoppingBag, AlertCircle } from "lucide-react"
@@ -16,7 +16,8 @@ function formatPrice(price: number): string {
   return `PKR ${price.toLocaleString()}`
 }
 
-export default function CartPage() {
+// Cart content component that may use navigation hooks
+function CartContent() {
   const { items, removeItem, updateQuantity, getCartTotal, getCartCount } = useCart()
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const router = useRouter()
@@ -167,5 +168,25 @@ export default function CartPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// Main cart page component with suspense boundary
+export default function CartPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-4 py-16 text-center">
+          <div className="mx-auto max-w-2xl">
+            <div className="h-16 w-16 mx-auto bg-gray-200 animate-pulse rounded-full"></div>
+            <div className="mt-4 h-8 bg-gray-200 animate-pulse rounded w-48 mx-auto"></div>
+            <div className="mt-2 h-4 bg-gray-200 animate-pulse rounded w-64 mx-auto"></div>
+            <div className="mt-8 h-10 bg-gray-200 animate-pulse rounded w-32 mx-auto"></div>
+          </div>
+        </div>
+      }
+    >
+      <CartContent />
+    </Suspense>
   )
 }
