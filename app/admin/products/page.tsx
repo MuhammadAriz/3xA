@@ -16,7 +16,6 @@ export default function ProductsPage() {
         </Button>
       </div>
 
-      {/* Storage setup guide will only show instructions if needed */}
       <StorageSetupGuide />
 
       <div className="mt-8">

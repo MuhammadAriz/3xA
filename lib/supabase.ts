@@ -1,33 +1,22 @@
 import { createClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/database.types"
 
-// Check if Supabase environment variables are available
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+// Simple environment variable checks
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
-// Create a flag to check if Supabase is configured
+// Flag to check if Supabase is configured
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey)
 
-// Create a singleton pattern for the Supabase client
+// Create a singleton instance
 let supabaseInstance: ReturnType<typeof createClient<Database>> | null = null
 
-// Create the Supabase client only if environment variables are available
+// Export the Supabase client
 export const supabase = isSupabaseConfigured
   ? (() => {
       if (!supabaseInstance) {
         try {
-          supabaseInstance = createClient<Database>(supabaseUrl!, supabaseAnonKey!, {
-            auth: {
-              persistSession: true,
-              autoRefreshToken: true,
-            },
-            global: {
-              fetch: (...args) => {
-                return fetch(...args)
-              },
-            },
-          })
-          console.log("Supabase client initialized successfully")
+          supabaseInstance = createClient<Database>(supabaseUrl, supabaseAnonKey)
         } catch (error) {
           console.error("Failed to initialize Supabase client:", error)
           return null
@@ -37,22 +26,12 @@ export const supabase = isSupabaseConfigured
     })()
   : null
 
-// Helper function to safely use Supabase
+// Helper function for React components
 export function useSupabaseClient() {
-  if (!isSupabaseConfigured) {
-    console.warn("Supabase is not configured. Using localStorage fallback.")
-    return null
-  }
-
-  if (!supabase) {
-    console.error("Supabase client initialization failed. Using localStorage fallback.")
-    return null
-  }
-
   return supabase
 }
 
-// Debug function to check Supabase connection
+// Debug function
 export async function checkSupabaseConnection() {
   if (!supabase) {
     return { success: false, error: "Supabase client not initialized" }

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { checkStorageStatus } from "@/app/actions/storage-setup"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -11,6 +12,38 @@ import Link from "next/link"
 
 export default function StorageSetupGuide() {
   const [copied, setCopied] = useState<string | null>(null)
+  const [needsSetup, setNeedsSetup] = useState(false)
+
+  useEffect(() => {
+    const checkSetup = async () => {
+      try {
+        const result = await checkStorageStatus()
+        setNeedsSetup(!result.success)
+      } catch (error) {
+        console.error("Error checking storage setup:", error)
+        setNeedsSetup(true)
+      }
+    }
+
+    checkSetup()
+  }, [])
+
+  if (needsSetup) {
+    return (
+      <Alert variant="warning" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          <p>
+            Storage setup is required for image uploads. Please follow the{" "}
+            <Link href="/admin/debug" className="font-medium underline">
+              storage setup guide
+            </Link>
+            .
+          </p>
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text)

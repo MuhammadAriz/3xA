@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Edit, Trash2, Eye, RefreshCw } from "lucide-react"
+import { Edit, Trash2, Eye } from "lucide-react"
 import { useProducts } from "@/contexts/product-context"
 import { useToast } from "@/components/ui/use-toast"
 import {
@@ -24,38 +24,15 @@ import LoadingOverlay from "@/components/loading-overlay"
 export default function ProductsTable() {
   const [searchTerm, setSearchTerm] = useState("")
   const [deleteProductId, setDeleteProductId] = useState<string | null>(null)
-  const { products, deleteProduct, isLoading, refreshProducts, error } = useProducts()
+  const { products, deleteProduct, isLoading, refreshProducts } = useProducts()
   const { toast } = useToast()
   const [isClient, setIsClient] = useState(false)
-  const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Use this to ensure hydration
   useEffect(() => {
     setIsClient(true)
-  }, [])
-
-  // Separate effect for refreshing products to avoid dependency issues
-  useEffect(() => {
-    if (isClient) {
-      handleRefreshProducts()
-    }
-  }, [isClient])
-
-  const handleRefreshProducts = async () => {
-    try {
-      setIsRefreshing(true)
-      await refreshProducts()
-    } catch (error) {
-      console.error("Failed to refresh products:", error)
-      toast({
-        title: "Error",
-        description: "Failed to load products. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsRefreshing(false)
-    }
-  }
+    refreshProducts()
+  }, [refreshProducts])
 
   const filteredProducts = products.filter(
     (product) =>
@@ -66,13 +43,11 @@ export default function ProductsTable() {
   const handleDeleteProduct = async () => {
     if (deleteProductId) {
       try {
-        setIsRefreshing(true)
         await deleteProduct(deleteProductId)
         toast({
           title: "Product deleted",
           description: "The product has been deleted successfully.",
         })
-        // Refresh the products list after deletion
         await refreshProducts()
       } catch (error) {
         console.error("Error deleting product:", error)
@@ -83,46 +58,26 @@ export default function ProductsTable() {
         })
       } finally {
         setDeleteProductId(null)
-        setIsRefreshing(false)
       }
     }
   }
 
   if (!isClient) {
-    return null // Return nothing during SSR to prevent hydration mismatch
+    return null
   }
 
   return (
     <div className="relative">
-      {(isLoading || isRefreshing) && <LoadingOverlay />}
+      {isLoading && <LoadingOverlay />}
 
-      <div className="mb-4 flex items-center justify-between gap-2">
+      <div className="mb-4">
         <Input
           placeholder="Search products..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-sm"
         />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={handleRefreshProducts}
-          disabled={isRefreshing}
-          title="Refresh products"
-        >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
-        </Button>
       </div>
-
-      {error && (
-        <div className="mb-4 rounded-md bg-red-50 p-4 text-red-800">
-          <p className="font-medium">Error loading products</p>
-          <p className="text-sm">{error}</p>
-          <Button variant="outline" size="sm" onClick={handleRefreshProducts} className="mt-2" disabled={isRefreshing}>
-            Try Again
-          </Button>
-        </div>
-      )}
 
       <div className="rounded-md border">
         <Table>
