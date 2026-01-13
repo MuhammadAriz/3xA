@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS products (
   images JSONB, -- Array of additional images
   category_id UUID REFERENCES categories(id),
   category TEXT NOT NULL, -- Legacy field for backward compatibility
-  rating NUMERIC NOT NULL DEFAULT 0 CHECK (rating >= 0 AND rating <= 5),
+  rating NUMERIC NOT NULL DEFAULT 0  CHECK (rating >= 0 AND rating <= 5),
   review_count INTEGER NOT NULL DEFAULT 0 CHECK (review_count >= 0),
   stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
   featured BOOLEAN NOT NULL DEFAULT false,
@@ -245,7 +245,7 @@ ALTER TABLE wishlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cart ENABLE ROW LEVEL SECURITY;
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
--- Create a function to check if a user is an admin
+-- Create a function to WITH CHECK if a user is an admin
 CREATE OR REPLACE FUNCTION is_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -268,7 +268,7 @@ USING (true);
 CREATE POLICY "Allow admin to insert products" 
 ON products FOR INSERT 
 TO authenticated
-USING (is_admin());
+WITH CHECK (is_admin());
 
 CREATE POLICY "Allow admin to update products" 
 ON products FOR UPDATE 
@@ -288,7 +288,7 @@ USING (true);
 CREATE POLICY "Allow admin to insert categories" 
 ON categories FOR INSERT 
 TO authenticated
-USING (is_admin());
+WITH CHECK (is_admin());
 
 CREATE POLICY "Allow admin to update categories" 
 ON categories FOR UPDATE 
@@ -319,7 +319,7 @@ USING (id = auth.uid() OR is_admin());
 CREATE POLICY "Allow admin to insert users" 
 ON users FOR INSERT 
 TO authenticated
-USING (is_admin());
+WITH CHECK (is_admin());
 
 -- Orders policies
 CREATE POLICY "Allow users to read their own orders" 
@@ -330,7 +330,7 @@ USING (user_id = auth.uid() OR is_admin());
 CREATE POLICY "Allow users to insert their own orders" 
 ON orders FOR INSERT 
 TO authenticated
-USING (user_id = auth.uid() OR user_id IS NULL);
+WITH CHECK (user_id = auth.uid() OR user_id IS NULL);
 
 CREATE POLICY "Allow users to update their own orders" 
 ON orders FOR UPDATE 
@@ -350,7 +350,7 @@ USING (EXISTS (
 CREATE POLICY "Allow users to insert their own order items" 
 ON order_items FOR INSERT 
 TO authenticated
-USING (EXISTS (
+WITH CHECK (EXISTS (
   SELECT 1 FROM orders
   WHERE orders.id = order_items.order_id 
   AND (orders.user_id = auth.uid() OR is_admin())
@@ -364,7 +364,7 @@ USING (status = 'published' OR user_id = auth.uid() OR is_admin());
 CREATE POLICY "Allow authenticated users to insert reviews" 
 ON reviews FOR INSERT 
 TO authenticated
-USING (user_id = auth.uid());
+WITH CHECK (user_id = auth.uid());
 
 CREATE POLICY "Allow users to update their own reviews" 
 ON reviews FOR UPDATE 
